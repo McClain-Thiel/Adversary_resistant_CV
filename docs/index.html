@@ -1,1 +1,387 @@
-test
+<html class="w-100">
+  <head>
+    <!-- Global site tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-157519291-1"></script>
+      <script async src="assets/idk_js.js"></script>
+    <link href="assets/idk_css.css" rel="stylesheet">
+    <link href="assets/bootstrap.min.css" rel="stylesheet">
+    <title>Robust CV</title>
+  </head>
+
+  <body class="w-100">
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left">
+      <h1>Robust Computer vision</h1>
+    </div>
+  </div>
+  <div class="row w-100 justify-content-center">
+    <div class="col-6 text-left my-auto">
+      <h4>Dante Everaert, McClain Thiel, Greg Yannett</h4>
+        <h5>For CS182: Designing, Visualizing and Understanding Deep Neural Networks </h5>
+    </div>
+  </div>
+
+    <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>Background</h2>
+        <p>
+            Over the course of the past 10-15 years, machine learning, and more specifically computer vision (CV)
+            has had a major impact on many industries and the consensus is that it will continue to disrupt and
+            revolutionize more and more facets of everyday life. Already, CV systems have shown promise and even
+            superhuman performance in areas ranging from driving to medical diagnosis. They are able to do this by
+            leveraging massive amounts of data and complex algorithms that can be trained to complete a specific task,
+            recently, however,  a serious problem has emerged. Look at the following example:
+            <img class="center" src="assets/imgs/adversarial-example.png" alt="me annotaed">
+
+            To a human, theses look identical. Same animal, same pose, same lighting, etc. But to a state of the art
+            neural net, the image on the right looks like a gibbon. This net, which routinely outperforms humans, is
+            more than 99% sure that the picture on the right is a gibbon. What could be causing this? </p>
+
+          <p>CV systems don't
+            'see' the same way humans do. If asked, "how do you identify a stop sign?", most humans would likely answer
+            something along the lines of shape, color, and the word 'stop' written on it. Neural networks don't operate
+            the same way, they look at features that aren't necessarily salient to the task but allow the model to
+            pictures easily. In practice, this means that they often rely heavily on texture and other aspects that a
+            human wouldn't consider the most relevant features for identifying an object. Clearly, this has some
+            advantages, as evidenced by the system's performance on any number of standardized tasks, however, there are
+            also significant drawbacks. The texture can be subtly changed or 'perturbed'  in such a way that it fools
+            the system into thinking that a picture is something it is obviously not. This minor perturbation doesn't
+            affect a human's ability to recognize a picture, and often isn't even noticeable, but it absolutely destroys
+            a computer's ability to make sense of an image.
+          </p>
+
+          <p>
+              These perturbations can be introduced to the system in two main ways: targeted or natural. Targeted
+              adversarial perturbations are difficult to defend against especially if the attacker has access to the
+              original model. There are many mature techniques for attacking theses systems and an effective defense
+              against them is still an open problem in the field. Applications of these attacks can be dangerous in the
+              right situation. Many self-driving cars rely at least partially on computer vision, which we know is
+              vulnerable, so if a creative attacker managed to perturb a stop sign in a specific way, they could cause
+              the car to perceive the sign as a 50 mph and accelerate instead of stopping.
+              <img class="center" src="assets/imgs/stopsign.jpg" alt="me annotaed">
+
+              There are many other applications of this approach but targeted attacks are largely out of scope for this writing.
+          </p>
+
+          <p>
+              Our approach is a training method for defense against natural adversarial examples, which are broadly
+              defined as images that aren't altered post-photography, but that cause significant and unexpected problems
+              for CV applications. These are slightly easier to correct for as they are not designed to cause problems.
+              <img class="center" src="assets/imgs/nat_example.jpg" alt="me annotaed">
+              If we can identify and reproduce the problem, we can simply retrain the network with these examples as well
+              as the original training set. This is called adversarial training. Adversarial training has been used for
+              defending against targeted attacks as well but its efficacy is somewhat limited.
+          </p>
+
+          <p>
+              In this repo, we develop an image recognition system based on res-net and the tiny image-net dataset
+              that is somewhat resistant to random natural perturbations. We show that our training method is effective
+              at improving the accuracy of our underlying model when testing on cross-validated tiny image-net data
+              which consists of 100,000 64x64 RGB images spanning 200 classes for training and 10,000 similar images
+              for validation.
+          </p>
+
+      </div>
+    </div>
+
+  <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>Approach</h2>
+          <h3>Data Preparation</h3>
+          <p>
+              As mentioned above, we are using the tiny-imagenet dataset. All of our data is dynamically augmented in two
+              main ways. The first and most important modification is generating and applying perturbations. This process
+              will be described in-depth in a future section. The second augmentation method is more conventional data
+              augmentation such as applying simple transformations to the images in the data loader. We use TensorFlow's
+              built-in ImageDataGenerator class to flip, shift, and zoom the images in a pseudo-random fashion as the
+              data is transferred from the directory to the model.
+          </p>
+          <h3>Baseline Model</h3>
+          <p>
+              We originally implemented as relatively shallow CNN consisting of 3 layers each of which had a convolutional
+              layer, a Relu non-linearity, and a max-pooling function, followed by a fully connected layer for the output.
+              We quickly realized that this architecture was not going to perform as well as we needed.  We began
+              researching state of the art models that had proven capable of superhuman performance. We settled on
+              res-net, due to a combination of its impressive performance and relatively simple architecture. Due to our
+              limited time and computational resources, a model that we could train and fine-tune quickly was essential
+              .  Our implementation of Res-Net performed well on the public validation set with XX.X% accuracy on 10,000
+              images. Below is a graphical representation of our implementation of Res-Net:
+
+              MODEL GRAPHIC
+          </p>
+          <h3>Adversarial Training</h3>
+
+          <p>
+              These perturbations can be introduced to the system in two main ways: targeted or natural. Targeted
+              adversarial perturbations are difficult to defend against especially if the attacker has access to the
+              original model. There are many mature techniques for attacking theses systems and an effective defense
+              against them is still an open problem in the field. Applications of these attacks can be dangerous in the
+              right situation. Many self-driving cars rely at least partially on computer vision, which we know is
+              vulnerable, so if a creative attacker managed to perturb a stop sign in a specific way, they could cause
+              the car to perceive the sign as a 50 mph and accelerate instead of stopping.
+              <img class="center" src="assets/imgs/stopsign.jpg" alt="me annotaed">
+
+              There are many other applications of this approach but targeted attacks are largely out of scope for this writing.
+          </p>
+
+          <p>
+              Our approach is a training method for defense against natural adversarial examples, which are broadly
+              defined as images that aren't altered post-photography, but that cause significant and unexpected problems
+              for CV applications. These are slightly easier to correct for as they are not designed to cause problems.
+              <img class="center" src="assets/imgs/nat_example.jpg" alt="me annotaed">
+              If we can identify and reproduce the problem, we can simply retrain the network with these examples as well
+              as the original training set. This is called adversarial training. Adversarial training has been used for
+              defending against targeted attacks as well but its efficacy is somewhat limited.
+          </p>
+
+      </div>
+  </div>
+
+  <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>Results</h2>
+          <p>
+              Over the course of the past 10-15 years, machine learning, and more specifically computer vision (CV)
+              has had a major impact on many industries and the consensus is that it will continue to disrupt and
+              revolutionize more and more facets of everyday life. Already, CV systems have shown promise and even
+              superhuman performance in areas ranging from driving to medical diagnosis. They are able to do this by
+              leveraging massive amounts of data and complex algorithms that can be trained to complete a specific task,
+              recently, however,  a serious problem has emerged. Look at the following example:
+              <img class="center" src="assets/imgs/adversarial-example.png" alt="me annotaed">
+
+              To a human, theses look identical. Same animal, same pose, same lighting, etc. But to a state of the art
+              neural net, the image on the right looks like a gibbon. This net, which routinely outperforms humans, is
+              more than 99% sure that the picture on the right is a gibbon. What could be causing this? </p>
+
+          <p>CV systems don't
+              'see' the same way humans do. If asked, "how do you identify a stop sign?", most humans would likely answer
+              something along the lines of shape, color, and the word 'stop' written on it. Neural networks don't operate
+              the same way, they look at features that aren't necessarily salient to the task but allow the model to
+              pictures easily. In practice, this means that they often rely heavily on texture and other aspects that a
+              human wouldn't consider the most relevant features for identifying an object. Clearly, this has some
+              advantages, as evidenced by the system's performance on any number of standardized tasks, however, there are
+              also significant drawbacks. The texture can be subtly changed or 'perturbed'  in such a way that it fools
+              the system into thinking that a picture is something it is obviously not. This minor perturbation doesn't
+              affect a human's ability to recognize a picture, and often isn't even noticeable, but it absolutely destroys
+              a computer's ability to make sense of an image.
+          </p>
+
+          <p>
+              These perturbations can be introduced to the system in two main ways: targeted or natural. Targeted
+              adversarial perturbations are difficult to defend against especially if the attacker has access to the
+              original model. There are many mature techniques for attacking theses systems and an effective defense
+              against them is still an open problem in the field. Applications of these attacks can be dangerous in the
+              right situation. Many self-driving cars rely at least partially on computer vision, which we know is
+              vulnerable, so if a creative attacker managed to perturb a stop sign in a specific way, they could cause
+              the car to perceive the sign as a 50 mph and accelerate instead of stopping.
+              <img class="center" src="assets/imgs/stopsign.jpg" alt="me annotaed">
+
+              There are many other applications of this approach but targeted attacks are largely out of scope for this writing.
+          </p>
+
+          <p>
+              Our approach is a training method for defense against natural adversarial examples, which are broadly
+              defined as images that aren't altered post-photography, but that cause significant and unexpected problems
+              for CV applications. These are slightly easier to correct for as they are not designed to cause problems.
+              <img class="center" src="assets/imgs/nat_example.jpg" alt="me annotaed">
+              If we can identify and reproduce the problem, we can simply retrain the network with these examples as well
+              as the original training set. This is called adversarial training. Adversarial training has been used for
+              defending against targeted attacks as well but its efficacy is somewhat limited.
+          </p>
+
+      </div>
+  </div>
+
+  <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>Tools</h2>
+          <p>
+              Over the course of the past 10-15 years, machine learning, and more specifically computer vision (CV)
+              has had a major impact on many industries and the consensus is that it will continue to disrupt and
+              revolutionize more and more facets of everyday life. Already, CV systems have shown promise and even
+              superhuman performance in areas ranging from driving to medical diagnosis. They are able to do this by
+              leveraging massive amounts of data and complex algorithms that can be trained to complete a specific task,
+              recently, however,  a serious problem has emerged. Look at the following example:
+              <img class="center" src="assets/imgs/adversarial-example.png" alt="me annotaed">
+
+              To a human, theses look identical. Same animal, same pose, same lighting, etc. But to a state of the art
+              neural net, the image on the right looks like a gibbon. This net, which routinely outperforms humans, is
+              more than 99% sure that the picture on the right is a gibbon. What could be causing this? </p>
+
+          <p>CV systems don't
+              'see' the same way humans do. If asked, "how do you identify a stop sign?", most humans would likely answer
+              something along the lines of shape, color, and the word 'stop' written on it. Neural networks don't operate
+              the same way, they look at features that aren't necessarily salient to the task but allow the model to
+              pictures easily. In practice, this means that they often rely heavily on texture and other aspects that a
+              human wouldn't consider the most relevant features for identifying an object. Clearly, this has some
+              advantages, as evidenced by the system's performance on any number of standardized tasks, however, there are
+              also significant drawbacks. The texture can be subtly changed or 'perturbed'  in such a way that it fools
+              the system into thinking that a picture is something it is obviously not. This minor perturbation doesn't
+              affect a human's ability to recognize a picture, and often isn't even noticeable, but it absolutely destroys
+              a computer's ability to make sense of an image.
+          </p>
+
+          <p>
+              These perturbations can be introduced to the system in two main ways: targeted or natural. Targeted
+              adversarial perturbations are difficult to defend against especially if the attacker has access to the
+              original model. There are many mature techniques for attacking theses systems and an effective defense
+              against them is still an open problem in the field. Applications of these attacks can be dangerous in the
+              right situation. Many self-driving cars rely at least partially on computer vision, which we know is
+              vulnerable, so if a creative attacker managed to perturb a stop sign in a specific way, they could cause
+              the car to perceive the sign as a 50 mph and accelerate instead of stopping.
+              <img class="center" src="assets/imgs/stopsign.jpg" alt="me annotaed">
+
+              There are many other applications of this approach but targeted attacks are largely out of scope for this writing.
+          </p>
+
+          <p>
+              Our approach is a training method for defense against natural adversarial examples, which are broadly
+              defined as images that aren't altered post-photography, but that cause significant and unexpected problems
+              for CV applications. These are slightly easier to correct for as they are not designed to cause problems.
+              <img class="center" src="assets/imgs/nat_example.jpg" alt="me annotaed">
+              If we can identify and reproduce the problem, we can simply retrain the network with these examples as well
+              as the original training set. This is called adversarial training. Adversarial training has been used for
+              defending against targeted attacks as well but its efficacy is somewhat limited.
+          </p>
+
+      </div>
+  </div>
+
+  <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>Lessons Learned</h2>
+          <p>
+              Over the course of the past 10-15 years, machine learning, and more specifically computer vision (CV)
+              has had a major impact on many industries and the consensus is that it will continue to disrupt and
+              revolutionize more and more facets of everyday life. Already, CV systems have shown promise and even
+              superhuman performance in areas ranging from driving to medical diagnosis. They are able to do this by
+              leveraging massive amounts of data and complex algorithms that can be trained to complete a specific task,
+              recently, however,  a serious problem has emerged. Look at the following example:
+              <img class="center" src="assets/imgs/adversarial-example.png" alt="me annotaed">
+
+              To a human, theses look identical. Same animal, same pose, same lighting, etc. But to a state of the art
+              neural net, the image on the right looks like a gibbon. This net, which routinely outperforms humans, is
+              more than 99% sure that the picture on the right is a gibbon. What could be causing this? </p>
+
+          <p>CV systems don't
+              'see' the same way humans do. If asked, "how do you identify a stop sign?", most humans would likely answer
+              something along the lines of shape, color, and the word 'stop' written on it. Neural networks don't operate
+              the same way, they look at features that aren't necessarily salient to the task but allow the model to
+              pictures easily. In practice, this means that they often rely heavily on texture and other aspects that a
+              human wouldn't consider the most relevant features for identifying an object. Clearly, this has some
+              advantages, as evidenced by the system's performance on any number of standardized tasks, however, there are
+              also significant drawbacks. The texture can be subtly changed or 'perturbed'  in such a way that it fools
+              the system into thinking that a picture is something it is obviously not. This minor perturbation doesn't
+              affect a human's ability to recognize a picture, and often isn't even noticeable, but it absolutely destroys
+              a computer's ability to make sense of an image.
+          </p>
+
+          <p>
+              These perturbations can be introduced to the system in two main ways: targeted or natural. Targeted
+              adversarial perturbations are difficult to defend against especially if the attacker has access to the
+              original model. There are many mature techniques for attacking theses systems and an effective defense
+              against them is still an open problem in the field. Applications of these attacks can be dangerous in the
+              right situation. Many self-driving cars rely at least partially on computer vision, which we know is
+              vulnerable, so if a creative attacker managed to perturb a stop sign in a specific way, they could cause
+              the car to perceive the sign as a 50 mph and accelerate instead of stopping.
+              <img class="center" src="assets/imgs/stopsign.jpg" alt="me annotaed">
+
+              There are many other applications of this approach but targeted attacks are largely out of scope for this writing.
+          </p>
+
+          <p>
+              Our approach is a training method for defense against natural adversarial examples, which are broadly
+              defined as images that aren't altered post-photography, but that cause significant and unexpected problems
+              for CV applications. These are slightly easier to correct for as they are not designed to cause problems.
+              <img class="center" src="assets/imgs/nat_example.jpg" alt="me annotaed">
+              If we can identify and reproduce the problem, we can simply retrain the network with these examples as well
+              as the original training set. This is called adversarial training. Adversarial training has been used for
+              defending against targeted attacks as well but its efficacy is somewhat limited.
+          </p>
+
+      </div>
+  </div>
+
+  <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>Team Contributions</h2>
+          <p>
+              Over the course of the past 10-15 years, machine learning, and more specifically computer vision (CV)
+              has had a major impact on many industries and the consensus is that it will continue to disrupt and
+              revolutionize more and more facets of everyday life. Already, CV systems have shown promise and even
+              superhuman performance in areas ranging from driving to medical diagnosis. They are able to do this by
+              leveraging massive amounts of data and complex algorithms that can be trained to complete a specific task,
+              recently, however,  a serious problem has emerged. Look at the following example:
+              <img class="center" src="assets/imgs/adversarial-example.png" alt="me annotaed">
+
+              To a human, theses look identical. Same animal, same pose, same lighting, etc. But to a state of the art
+              neural net, the image on the right looks like a gibbon. This net, which routinely outperforms humans, is
+              more than 99% sure that the picture on the right is a gibbon. What could be causing this? </p>
+
+          <p>CV systems don't
+              'see' the same way humans do. If asked, "how do you identify a stop sign?", most humans would likely answer
+              something along the lines of shape, color, and the word 'stop' written on it. Neural networks don't operate
+              the same way, they look at features that aren't necessarily salient to the task but allow the model to
+              pictures easily. In practice, this means that they often rely heavily on texture and other aspects that a
+              human wouldn't consider the most relevant features for identifying an object. Clearly, this has some
+              advantages, as evidenced by the system's performance on any number of standardized tasks, however, there are
+              also significant drawbacks. The texture can be subtly changed or 'perturbed'  in such a way that it fools
+              the system into thinking that a picture is something it is obviously not. This minor perturbation doesn't
+              affect a human's ability to recognize a picture, and often isn't even noticeable, but it absolutely destroys
+              a computer's ability to make sense of an image.
+          </p>
+
+          <p>
+              These perturbations can be introduced to the system in two main ways: targeted or natural. Targeted
+              adversarial perturbations are difficult to defend against especially if the attacker has access to the
+              original model. There are many mature techniques for attacking theses systems and an effective defense
+              against them is still an open problem in the field. Applications of these attacks can be dangerous in the
+              right situation. Many self-driving cars rely at least partially on computer vision, which we know is
+              vulnerable, so if a creative attacker managed to perturb a stop sign in a specific way, they could cause
+              the car to perceive the sign as a 50 mph and accelerate instead of stopping.
+              <img class="center" src="assets/imgs/stopsign.jpg" alt="me annotaed">
+
+              There are many other applications of this approach but targeted attacks are largely out of scope for this writing.
+          </p>
+
+          <p>
+              Our approach is a training method for defense against natural adversarial examples, which are broadly
+              defined as images that aren't altered post-photography, but that cause significant and unexpected problems
+              for CV applications. These are slightly easier to correct for as they are not designed to cause problems.
+              <img class="center" src="assets/imgs/nat_example.jpg" alt="me annotaed">
+              If we can identify and reproduce the problem, we can simply retrain the network with these examples as well
+              as the original training set. This is called adversarial training. Adversarial training has been used for
+              defending against targeted attacks as well but its efficacy is somewhat limited.
+          </p>
+
+      </div>
+  </div>
+
+  <div class="row w-100 justify-content-center pt-5" id="overview">
+      <div class="col-6 text-left">
+          <h2>References</h2>
+          <p>
+              Over the course of the past 10-15 years, machine learning, and more specifically computer vision (CV)
+              has had a major impact on many industries and the consensus is that it will continue to disrupt and
+              revolutionize more and more facets of everyday life. Already, CV systems have shown promise and even
+              superhuman performance in areas ranging from driving to medical diagnosis. They are able to do this by
+              leveraging massive amounts of data and complex algorithms that can be trained to complete a specific task,
+              recently, however,  a serious problem has emerged. Look at the following example:
+              <img class="center" src="assets/imgs/adversarial-example.png" alt="me annotaed">
+
+              To a human, theses look identical. Same animal, same pose, same lighting, etc. But to a state of the art
+              neural net, the image on the right looks like a gibbon. This net, which routinely outperforms humans, is
+              more than 99% sure that the picture on the right is a gibbon. What could be causing this? </p>
+      </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="assets/jquery-3.4.1.slim.min.js"></script>
+  <script src="assets/popper.min.js"></script>
+  <script src="assets/bootstrap.min.js"></script>
+  <!-- MathJax -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </body>
+
+</html>
