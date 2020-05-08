@@ -1,6 +1,5 @@
 *.pyc
 *.png
-*.jpg
 data/
 tiny-imagenet-200/
 .ipynb_checkpoints/
