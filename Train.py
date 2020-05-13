@@ -9,7 +9,7 @@ import numpy as np
 
 NUM_EPOCHS = 100
 
-params = { 'batch_size': 32,
+params = { 'batch_size': 1,
            'shuffle': True,
            'num_workers': 6
             }
@@ -34,6 +34,8 @@ def main():
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model = model.to(device)
+    crit = crit.to(device)
+
     print("Don't compare val loss to train loss, they are on different scales.")
     train_acc_arr, val_acc_arr = [], []
     for epoch in range(NUM_EPOCHS):
