@@ -9,7 +9,7 @@ import numpy as np
 
 NUM_EPOCHS = 100
 
-params = { 'batch_size': 64,
+params = { 'batch_size': 32,
            'shuffle': True,
            'num_workers': 6
             }
@@ -37,6 +37,8 @@ def main():
     print("Don't compare val loss to train loss, they are on different scales.")
     train_acc_arr, val_acc_arr = [], []
     for epoch in range(NUM_EPOCHS):
+        torch.cuda.empty_cache()
+        torch.cuda.memory_stats(device=device)
         curr_loss, val_loss = 0.0, 0.0
         for (loc_batch, loc_label), (val_batch, val_label) in zip(train_gen, val_gen):
             inputs, labels = loc_batch.to(device), loc_label.to(device)
