@@ -50,3 +50,17 @@ img.resize {
     transform: translate(-50%, -50%);
     text-align: center;
 }
+.sm-img {
+    display: block;
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+ul {
+    text-align: center;
+    list-style: inside;
+    columns: 2;
+    -webkit-columns: 2;
+    -moz-columns: 2;
+}
