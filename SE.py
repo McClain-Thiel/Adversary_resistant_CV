@@ -20,7 +20,7 @@ class SELayer(nn.Module):
         b, c, _, _ = x.size()
         y = self.avg_pool(x).view(b, c)
         y = self.fc(y).view(b, c, 1, 1)
-        y = y.expand_as(x)
+        y = F.interpolate(y, x.size())
         return x * y
 
 
