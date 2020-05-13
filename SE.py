@@ -20,7 +20,8 @@ class SELayer(nn.Module):
         b, c, _, _ = x.size()
         y = self.avg_pool(x).view(b, c)
         y = self.fc(y).view(b, c, 1, 1)
-        return x * y.expand_as(x)
+        y = y.expand_as(x)
+        return x * y
 
 
 def conv3x3(in_planes, out_planes, stride=1):
