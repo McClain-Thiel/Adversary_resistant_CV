@@ -5,7 +5,7 @@ from Data import TinyImNet
 from torch.utils.data import DataLoader
 
 
-NUM_EPOCHS = 3
+NUM_EPOCHS = 100
 
 params = { 'batch_size': 64,
            'shuffle': True,
@@ -25,7 +25,7 @@ def main():
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
-
+    model = model.to(device)
     print("Don't compare val loss to train loss, they are on different scales.")
 
     for epoch in range(NUM_EPOCHS):
@@ -39,11 +39,15 @@ def main():
             loss.backward()
             opt.step()
 
+            val_batch, val_label = val_batch.to(device), val_label.to(device)
+
             val_output = model.forward(val_batch)
             val_loss += crit(val_output, val_label)
             curr_loss += loss.item()
         print("Loss for Epoch ", epoch, ': ', curr_loss)
         print("Val Loss for Epoch ", epoch, ': ', val_loss)
+
+    torch.save(model.state_dict(), "model/resnet")
 
 if __name__ == '__main__':
     main()
