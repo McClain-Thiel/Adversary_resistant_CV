@@ -1,11 +1,9 @@
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from torchvision import transforms
 import os
 import torch
 from PIL import Image
 IMG_SIZE = (64,64)
-
-#Largley from https://gist.github.com/mf1024/a9199a325f9f7e98309b19eb820160a7. Thanks
 
 class TinyImNet(Dataset):
 

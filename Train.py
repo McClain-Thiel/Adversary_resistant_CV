@@ -26,9 +26,11 @@ def main():
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
 
+    print("Don't compare val loss to train loss, they are on different scales.")
+
     for epoch in range(NUM_EPOCHS):
-        curr_loss = 0.0
-        for loc_batch, loc_label in train_gen:
+        curr_loss, val_loss = 0.0, 0.0
+        for (loc_batch, loc_label), (val_batch, val_label) in zip(train_gen, val_gen):
             inputs, labels = loc_batch.to(device), loc_label.to(device)
             opt.zero_grad()
 
@@ -37,8 +39,11 @@ def main():
             loss.backward()
             opt.step()
 
+            val_output = model.forward(val_batch)
+            val_loss += crit(val_output, val_label)
             curr_loss += loss.item()
         print("Loss for Epoch ", epoch, ': ', curr_loss)
+        print("Val Loss for Epoch ", epoch, ': ', val_loss)
 
 if __name__ == '__main__':
     main()

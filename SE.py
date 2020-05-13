@@ -1,10 +1,9 @@
-#modified but credit to https://github.com/moskomule/senet.pytorch/blob/master
-# resnet implemenetation from https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
-
 import torch.nn as nn
 from torchvision.models import ResNet
 import torch.nn.functional as F
 
+#modified but credit to https://github.com/moskomule/senet.pytorch/blob/master
+# resnet implemenetation from https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
 
 class SELayer(nn.Module):
     def __init__(self, channel, reduction=16):
@@ -40,7 +39,7 @@ class SEBasicBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(planes, planes, 1)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.se = SELayer(planes, reduction) #this should downsample to original size but it doenst
+        self.se = SELayer(planes, reduction)
         self.downsample = downsample
         self.stride = stride
 
@@ -126,21 +125,13 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
-        print("out f layer: ", out.size())
         out = self.layer1(out)
-        print("out 1 layer: ", out.size())
         out = self.layer2(out)
-        print("out 2 layer: ", out.size())
         out = self.layer3(out)
-        print("out 3 layer: ", out.size())
         out = self.layer4(out)
-        print("out 4 layer: ", out.size())
         out = F.avg_pool2d(out, 64)
-        print("out f2 layer: ", out.size())
         out = out.view(out.size(0), -1)
-        print("out resize/flatten layer: ", out.size())
         out = self.linear(out)
-        print("out linear/last layer: ", out.size())
         return out
 
 def se_resnet50(num_classes=200):
