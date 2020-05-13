@@ -37,35 +37,36 @@ def main():
     print("Don't compare val loss to train loss, they are on different scales.")
     train_acc_arr, val_acc_arr = [], []
     for epoch in range(NUM_EPOCHS):
-        torch.cuda.empty_cache()
         print(torch.cuda.memory_stats(device=device))
         curr_loss, val_loss = 0.0, 0.0
-        for (loc_batch, loc_label), (val_batch, val_label) in zip(train_gen, val_gen):
-            inputs, labels = loc_batch.to(device), loc_label.to(device)
+        for (X, y), (val_X, val_y) in zip(train_gen, val_gen):
+            X, y = X.to(device), y.to(device)
             opt.zero_grad()
 
             print("Starting forward pass for epoch: ", epoch)
-            outputs = model.forward(inputs)
+            outputs = model.forward(X)
             print("Starting backward pass for epoch: ", epoch)
-            loss = crit(outputs, labels)
+            loss = crit(outputs, y)
             loss.backward()
             opt.step()
 
-            val_batch, val_label = val_batch.to(device), val_label.to(device)
+            val_X, val_y = val_X.to(device), val_y.to(device)
 
-            val_output = model.forward(val_batch)
-            val_loss += crit(val_output, val_label)
+            val_output = model.forward(val_X)
+            val_loss += crit(val_output, val_y)
             curr_loss += loss.item()
+            torch.cuda.empty_cache()
 
         print("Loss for Epoch ", epoch, ': ', curr_loss)
         print("Val Loss for Epoch ", epoch, ': ', val_loss)
 
-        (train_inputs, train_labesl),  (val_inputs, val_labels) = next(train_gen), next(val_gen)
-        train_outputs, val_outputs = model.forward(train_inputs), model.forward(val_inputs)
-        train_acc, val_acc = calc_acc(train_outputs, train_labesl), calc_acc(val_outputs, val_labels)
-        print("Epoch: ", epoch, " Train Accuracy: ", train_acc, " Test Accuracy: ", val_acc)
-        train_acc_arr.append(train_acc)
-        val_acc_arr.append(val_acc)
+        with torch.no_grad():
+            (X, y),  (val_X, val_y) = next(train_gen).to(device), next(val_gen).to(device)
+            train_outputs, val_outputs = model.forward(X), model.forward(val_X)
+            train_acc, val_acc = calc_acc(train_outputs, y), calc_acc(val_outputs, val_y)
+            print("Epoch: ", epoch, " Train Accuracy: ", train_acc, " Test Accuracy: ", val_acc)
+            train_acc_arr.append(train_acc)
+            val_acc_arr.append(val_acc)
 
 
     data = {"epoch":np.arange(0,100),

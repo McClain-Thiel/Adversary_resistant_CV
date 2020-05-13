@@ -17,10 +17,10 @@ class SELayer(nn.Module):
         )
 
     def forward(self, x):
-        b, c, _, _ = x.size()
+        b, c, row, col = x.size()
         y = self.avg_pool(x).view(b, c)
         y = self.fc(y).view(b, c, 1, 1)
-        y = F.interpolate(y, x.size())
+        y = F.interpolate(y, (row, col))
         return x * y
 
 
