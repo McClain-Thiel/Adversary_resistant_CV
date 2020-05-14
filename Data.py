@@ -25,14 +25,14 @@ class TinyImNet(Dataset):
 
     def __getitem__(self, index):
         ID = self.list_ID[index]
-        img = Image.open(ID)
+        img = Image.open(ID).resize((32,32))
         X = self.to_tensor(img)
         y = self.keys[self.labels[index]]
         if list(X.size()) == [3, 64, 64]:
             return X,y
         else:
             print('Error Loading photo')
-            X = torch.ones([3, 64, 64])
+            X = torch.ones([1, 32, 32])
             y = 00
             return X, y
 

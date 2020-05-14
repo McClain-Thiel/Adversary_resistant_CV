@@ -141,16 +141,26 @@
               traffic camera where the angle is different.
           </p>
           <p>
-              This third type is much broader, consisting of any obstruction or modification that isn't covered by
-              the first two. Some common examples are and object that is only partially in the frame or the object is
-              zoomed in on and the net can't recognize it. In order to, train against these types of images, we
-              synthetically generate  new images that are meant to mimic the same types of problems in the original
-              training set. By freezing most of the network and retraining select unfrozen layers with our new dataset
-              of perturbed images, we hope to mitigate the effect of adversarial examples.
+              This third type is much broader, consisting of any obstruction or modification that isn't covered by the
+              first two. Some common examples are and object that is only partially in the frame or the object is zoomed
+              in on and the net can't recognize it.  This is a fairly common type of perturbation that occurs often in
+              real-life photography and video systems and can often happen for a few consecutive frames in a video in
+              which a known object is partially obstructed. For example, a video where a person is walking might have
+              several frames where the person is standing in such a way that only half of their body is visible. A human
+              would have no problem working with this footage but computers often do.
           </p>
 
           <p>
-              Our perturbations are listed below:
+              In order to train against these types of images, develop a list of functions that, when given an image,
+              will generate a new image that is mean to look like a perturbation that might occur naturally. We do this
+              because we want the network to associate these confusing images with the correct class, and the easiest
+              way to forge an association is simply retraining, but data collection and labeling is expensive and
+              difficult normally. Collecting and labeling a significant amount of adversarial data would be nearly
+              impossible in the time frame allotted so we needed to automate the process of sourcing adversarial images.
+          </p>
+
+          <p>
+              We developed a collection of functions that perform the following effects to images:
           </p>
               <ul>
                   <li>flip</li>
@@ -166,25 +176,55 @@
                   <li>blur</li>
                </ul>
           <p>
-              Most of these are too simple or self explanatory to justify an explanation but examples are
-              shown below:
+
+              Each of these is meant to mimic a situation that could arise in the real world. Some are obvious like
+              shift and zoom, but others are less so.  Sheering doesn't seem like it would be an issue in the real
+              world but camera distortion and subsequent rectification gone wrong can lead to this time of transformation
+              on many devices and so we must replicate it. We also use partial deletion and mesh overlay to train against
+              specific image examples that we felt represented a significant proportion of the errors in the original set.
+              These are when an object is partially obscured but still fully in frame, which is different from shifted
+              or zoomed out of frame, and when a picture is over-represented by a texture that's not pertinent to the
+              object being classified.   There were several examples of the latter including viewing an object through
+              a screen or on a background of a pattern like a stylized table. Examples of some can be seen below:
           </p>
           <img class="center" src="assets/imgs/perturbs.jpg" alt="me annotaed">
+
           <p>
-            All of these effects are applied to random pictures and to random degrees in the training set. For example,
+                All of these effects are applied to random pictures and to random degrees in the training set. For example,
               dropout was implemented such that a random percent of pixels between 5% and 15% would be deleted at random
               locations. Similar randomization procedures are implemented for all functions in an attempt to cover all
               reasonable natual perturbations.
           </p>
-
           <p>
-              Once a suitable number of perturbed images are generated ( about half as many as the model was trained in
-              per class), the original model is retrained with all layered except X, X, and X frozen. This prevents the
-              network from overfitting and being able to classify exclusively perturbed examples. It is retrained for XX
-              epochs with the entire dataset which includes about half original training images, and half synthetic
-              adversarial examples.
+              We built a pipeline to generate hundreds of perturbed images and store them remotely. We then froze every
+              layer of our network except for the logits, post norm, and global pool layers. We also unfroze block4 which
+              is one the res-net bottleneck blocks toward the end of the network. This allows the network to retain its
+              ability to recognize things it already is able to recognize but also retrain certain layers that are working
+              suboptimally.
+          </p>
+          <p>
+              We chose which layers to unfreeze manually, by looking at the res-net architecture and the saliency maps and
+              layer activations for each layer. When we found a layer that visually resembled the type of perturbation
+              that we were trying to train against, or found a layer that had similar structural elements, we unfroze it.
+              For example, when training against shifts and out of frame objects, we unfroze the very last layers
+              because we want to train the network to recognize a fully developed image, which isn't known until the
+              later layers, as its class regardless of its location in the frame.  However, when we trained against
+              dropout we unfroze both early and later layers because the ability to recognize the objects detected by
+              the earlier layers (while resistant to dropout) is important to recognize the objects they form in the
+              later layers. If we ignored the earlier layers with this perturbation we might still be susceptible to this
+              type of problem
           </p>
 
+          <p>
+              We also implemented our own version of res-net with self-attention which was inspired by a paper called
+              'Squeeze-and-Excitation Networks'. The idea behind this architecture is that it is more resistant to
+              pictures where the object to be classified is obscured or in front of a texture that confuses the classifier
+              because the residuals are combined with a squeeze and excitation layer which is meant to preserve salient
+              features from the earlier layers. We implemented this ourselves because we couldn't find a pre-trained network
+              that worked the way we wanted, however because of this, our ability to train the network in a timely fashion
+              was hobbled.  Even with downsampled training images and a GPU we were unable to achieve a high enough accuracy
+              score to be work talking about more.
+          </p>
       </div>
   </div>
 
@@ -193,8 +233,53 @@
       <div class="col-6 text-left">
           <h2>Results</h2>
           <p>
-              training...
+              As mentioned above, our baseline model ran at 72% accuracy on average and topped out at 90% on our default
+              dataset of tiny-imagenet-200 images. During our adversarial training, we built a new dataset that
+              consisted of roughly half normal images and half images that were synthetically perturbed. This is the
+              dataset that we partitioned and then used to train and test our hardened network.  The original training
+              and validation data for the original res-net trained on unperturbed is shown below:
           </p>
+          <img class="center" src="assets/imgs/acc_curves.jpg" alt="me annotaed">
+            <p>The network's accuracy saturates around 85% and is still rather volatile from epoch to epoch after
+                about 15 epochs, presumably due at least partially to natural adversarial examples in the original
+                training set.  Due to our limited time and computational resources, we were not able to train our
+                network from scratch and are required to get our training metrics from the original sources. While
+                our network did improve performance against adversarial examples in particular, we were not able to
+                train as long as we would have liked and so our results are a bit inconclusive. The plot of our data is
+                shown here:
+            </p>
+            <img class="center" src="assets/imgs/plots.jpg" alt="me annotaed">
+
+          <p>
+                However, as mentioned, we felt out data lacked the robustness and therefore reliability it might have
+              gained from more time training. To account for this we've also included the graph of another taining run.
+                Below is a graph of data points from the training of a similar network using similar methodology to ours. The scale and unfortunately
+                small performance gain made the use of a graph generated from our data redundant.
+            </p>
+          <img class="center" src="assets/imgs/adv_train_acc.jpg" alt="me annotaed">
+          <p>
+              Our findings largely agree with those mentioned in the original paper from Hendrycks. Our adversarial training,
+              did show some improvement but does not make a compelling case to continue this methodology. Our model scored
+              54% accuracy on average on our dataset consisting of half synthetically perturbed images and achieving a
+              best of 75%. This represents an 8% improvement on the heavily perturbed dataset from our original benchmark
+              of 46% accuracy on validation data. Validation data consisted of a 15% partition of the half perturbed dataset.
+
+          </p>
+
+          <p>
+              In future work, we intend to combine the self-attention model with the perturbations and develop a more
+              robust method for making perturbed images. This should combine the best aspects of both because we believe
+              that the two augmentation methods don't train for the same type of adversarial example. The two methods
+              should complement each other in a way that leads to a robust network, reasonably resistant to many types
+              of sup-optimal images that could be found in nature.
+          </p>
+
+          <p>
+              As previously mentioned, we also implemented a res-net model with self-attention that showed some level
+              of promise in several papers including the original however due to training difficulties we don't have
+              anything substantial to report for this network.
+          </p>
+
 
       </div>
   </div>
@@ -231,7 +316,16 @@
       <div class="col-6 text-left">
           <h2>Lessons Learned</h2>
           <p>
-             hell if i know
+              We all felt that we relearned many of the lessons that have become common in machine learning, the first
+              of which is that computing resources are invaluable.   If we have far far more compute we would have been
+              able to implement a far more robust solution by being able to not only build a res-net style architecture
+              with self-attention as we wanted, but also to be able to iterate through ideas faster than we are currently
+              able. The second major lesson that I think we all learned is that the most important aspect is always the
+              data. We spent large amounts of time curating, cleaning and preprocessing the data to fit a network we
+              already knew worked. Designing and building network architectures from scratch is very difficult and often
+              doesn't produce better results than augmenting the data.  We show several times that networks that aren't
+              trained specifically to resist natural perturbations performed better on both perturbed and non-perturbed
+              data than ours due simply to the massive amount of data they were allowed to train on.
           </p>
 
 
@@ -287,6 +381,22 @@
                   Yuan, Xiaoyong, et al. "Adversarial Examples: Attacks and Defenses for Deep Learning." IEEE
                   Transactions on Neural Networks and Learning Systems, vol. 30, no. 9, 2019, pp. 2805-2824., doi:10.1109/
                   tnnls.2018.2886017.
+              </li>
+
+              <li>
+                  "Squeeze-and-Excitation Networks", Jie Hu and Li Shen and Samuel Albanie and Gang Sun and Enhua Wu,
+                  2017, 1709.01507
+              </li>
+
+              <li>
+                  "Deep Residual Learning for Image Recognition" Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun
+                  2015, 1512.03385
+              </li>
+
+              <li>
+                  J. Deng, W. Dong, R. Socher, L. Li, Kai Li and Li Fei-Fei, "ImageNet: A large-scale hierarchical
+                  image database," 2009 IEEE Conference on Computer Vision and Pattern Recognition, Miami, FL, 2009,
+                  pp. 248-255, doi: 10.1109/CVPR.2009.5206848.
               </li>
           </ol>
       </div>
